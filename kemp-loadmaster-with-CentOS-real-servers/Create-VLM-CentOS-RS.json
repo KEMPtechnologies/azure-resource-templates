@@ -1,0 +1,355 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "LoadMasterName": {
+      "type": "string",
+      "metadata": {
+        "description": "This is the name of your KEMP LoadMaster"
+      }
+    },
+     "webvmNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "This is the prefix name of your Web Servers"
+      }
+    },
+    "NumberofWebServers": {
+      "type": "Int",
+      "metadata": {
+        "description": "This is how many web servers will be deployed (number between 1-5)"
+      }
+    },
+    "newStorageAccountName": { 
+     "type": "string", 
+     "metadata": { 
+       "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed." 
+      }
+   }, 
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the KEMP LoadMaster."
+      }
+    },
+    "CentOSUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "UserName for the CentOS Virtual Machine"
+      }
+    },
+    "CentOSPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the CentoS Virtual Machine"
+      }
+    },
+    "LoadMasterBalPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the KEMP bal account"
+      }
+    },
+    "LoadMasterVMSize": {
+      "type": "securestring",
+       "defaultValue": "Standard_A1",
+        "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "VMSize for LoadMaster"
+      }
+    },
+  "CentOSVMSize": {
+      "type": "securestring",
+      "defaultValue": "Standard_A1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "VMSize for CentOS Web Server(s)"
+      }
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "publicIPAddressName": "[concat(parameters('LoadMasterName'),'PublicIP')]",
+    "LMOSdiskName": "[concat(parameters('LoadMasterName'),'OSdisk')]",
+    "CentOSdiskName": "[concat(parameters('webvmNamePrefix'),'OSdisk')]",
+    "LoadMasterusername": "bal",
+    "LoadMasterName": "[parameters('LoadMasterName')]",
+    "virtualNetworkName": "[concat(parameters('LoadMasterName'),'VNet')]",
+    "LoadMasternicName": "[concat(parameters('LoadMasterName'),'Nic')]",
+    "webnicName": "[concat(parameters('webvmNamePrefix'),'Nic')]",
+    "addressPrefix": "10.0.0.0/24",
+    "subnet1Name": "mysubnet",
+    "subnet1Prefix": "10.0.0.0/24",
+    "storageAccountType": "Standard_LRS",
+    "vmStorageAccountContainerName": "vhds",
+    "publicIPAddressType": "Dynamic",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "networkSecurityGroupName": "SecurityGroup",
+    "LMimageOffer": "vlm-azure",
+    "LMimagePublisher": "kemptech",
+    "LMimageVersion": "latest",
+    "LMimageSKU": "basic-byol",
+    "CentimageOffer": "CentOS",
+    "CentimagePublisher": "OpenLogic",
+    "CentimageVersion": "latest",
+    "CentimageSKU": "7.3",
+    "LMimagePlan": {
+ 	"name": "[variables('LMimageSku')]",
+  	"product": "[variables('LMimageOffer')]",
+  	"publisher": "[variables('LMimagePublisher')]"
+       },
+     "CentimagePlan": {
+ 	"name": "[variables('CentimageSku')]",
+  	"product": "[variables('CentimageOffer')]",
+  	"publisher": "[variables('CentimagePublisher')]"
+       }
+     },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkSecurityGroup"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "rule1",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+   {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[toLower(parameters('newStorageAccountName'))]",
+            "apiVersion": "2015-06-15",
+            "location": "[variables('location')]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ],
+        "dhcpOptions": {
+          "dnsServers": [ "4.2.2.2" ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('LoadMasternicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('LoadMasterName')]",
+      "plan": "[variables('LMimagePlan')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('LoadMasternicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('LoadMastervmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('LoadMasterName')]",
+          "adminUsername": "[variables('LoadMasterUsername')]",
+          "adminPassword": "[parameters('LoadMasterBalPassword')]"
+        },
+        "storageProfile": {
+	"imageReference": {
+            "publisher": "[variables('LMimagePublisher')]",
+            "offer": "[variables('LMimageOffer')]",
+            "sku": "[variables('LMimageSKU')]",
+            "version": "[variables('LMimageVersion')]"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName')),'2015-06-15').primaryEndpoints.blob,'vhds/', variables('LMOSdiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('LoadMasternicName'))]"
+         }
+       ]
+
+     }
+, 
+    "diagnosticsProfile": {
+          "bootDiagnostics": {
+             "enabled": "false"
+            }
+       }
+   }
+ 
+ },
+{
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('webnicName'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicLoop",
+        "count":"[Parameters('NumberofWebServers')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              }
+             }
+           }
+          ]
+        }
+      },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('webvmNamePrefix'), copyindex())]",
+      "location": "[resourceGroup().location]",
+       "copy": {
+            "name": "virtualMachineLoop",
+            "count": "[Parameters('NumberofWebServers')]"
+         },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('webnicName'), copyindex())]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('CentOSvmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('webvmNamePrefix'), copyIndex())]",
+          "adminUsername": "[parameters('centOSUsername')]",
+          "adminPassword": "[parameters('CentOSPassword')]"
+        },
+        "storageProfile": {
+	"imageReference": {
+            "publisher": "[variables('CentimagePublisher')]",
+            "offer": "[variables('CentimageOffer')]",
+            "sku": "[variables('CentimageSKU')]",
+            "version": "[variables('CentimageVersion')]"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('newstorageAccountName')),'2015-06-15').primaryEndpoints.blob, 'vhds/', variables('CentOSdiskName'), copyindex(), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+             "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('webnicName'),copyindex()))]"
+         }
+       ]
+
+     }
+, 
+    "diagnosticsProfile": {
+          "bootDiagnostics": {
+             "enabled": "false"
+            }
+       }
+   }
+ 
+ }
+  ],
+  "outputs": { }
+}
