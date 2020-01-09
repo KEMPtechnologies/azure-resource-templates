@@ -1,0 +1,7 @@
+{
+  "itemDisplayName": "Single KEMP LoadMaster with Managed Disks",
+  "summary": "Deploy a single KEMP LoadMaster with Managed Disks.",
+  "description": "This template deploys a single KEMP LoadMaster using Managed Disks",
+  "githubUsername": "kurtjung",
+  "dateUpdated": "2020-01-09"
+}

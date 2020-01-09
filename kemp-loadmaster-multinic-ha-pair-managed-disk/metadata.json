@@ -1,0 +1,7 @@
+{
+  "itemDisplayName": "KEMP LoadMaster HA Pair using Multi-NIC with Managed Disks",
+  "summary": "Deploy a KEMP LoadMaster HA Pair using Multi-NIC with Managed Disks.",
+  "description": "This template deploys a Multi-NIC KEMP LoadMaster HA Pair using Managed Disks",
+  "githubUsername": "kurtjung",
+  "dateUpdated": "2020-01-09"
+}

@@ -1,0 +1,7 @@
+{
+  "itemDisplayName": "KEMP LoadMaster (MultiNIC) with Managed Disks",
+  "summary": "Deploy a Multi NIC KEMP LoadMaster with Managed Disks.",
+  "description": "This template creates a KEMP LoadMaster with two interfaces into existing Subnets using Managed Disks.",
+  "githubUsername": "kurtjung",
+  "dateUpdated": "2020-01-09"
+}

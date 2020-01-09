@@ -1,0 +1,27 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+     "vlmNamePrefix": {
+      "value": "KempVLMHA"
+    },
+	 "vmSize": {
+      "value": "Standard_D2"
+    },
+	"balPassword": {
+      "value": "GEN-PASSWORD"
+    },
+    "existingvirtualNetworkResourceGroup": {
+      "value": "KEMPVnet-RG1"
+    },
+    "existingvirtualNetworkName": {
+      "value": "KEMPVnet"
+    },
+   "existingsubnetName1": {
+      "value": "subnet1"
+    },
+   "existingsubnetName2": {
+      "value": "subnet2"
+    }
+  }
+}
