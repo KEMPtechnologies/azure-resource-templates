@@ -199,6 +199,9 @@
             "[concat('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
          ],
          "properties": {
+		 "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
+                     },
             "ipConfigurations": [
                {
                   "name": "ipconfig1",
@@ -206,9 +209,6 @@
                      "privateIPAllocationMethod": "Dynamic",
                      "subnet": {
                         "id": "[variables('subnetRef1')]"
-                     },
-                     "networkSecurityGroup": {
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
                      },
                      "loadBalancerBackendAddressPools": [
                         {
@@ -237,6 +237,9 @@
             "[concat('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
          ],
          "properties": {
+		   "networkSecurityGroup": {
+               "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
+               },
             "ipConfigurations": [
                {
                   "name": "ipconfig1",
@@ -244,9 +247,6 @@
                      "privateIPAllocationMethod": "Dynamic",
                      "subnet": {
                         "id": "[variables('subnetRef1')]"
-                     },
-                     "networkSecurityGroup": {
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
                      },
                      "loadBalancerBackendAddressPools": [
                         {

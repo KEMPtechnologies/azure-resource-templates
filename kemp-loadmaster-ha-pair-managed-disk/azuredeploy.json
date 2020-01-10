@@ -181,6 +181,9 @@
             "[concat('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
          ],
          "properties": {
+		    "networkSecurityGroup": {
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
+               },
             "ipConfigurations": [
                {
                   "name": "ipconfig1",
@@ -188,9 +191,6 @@
                      "privateIPAllocationMethod": "Dynamic",
                      "subnet": {
                         "id": "[variables('subnetRef')]"
-                     },
-                     "networkSecurityGroup": {
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
                      },
                      "loadBalancerBackendAddressPools": [
                         {
